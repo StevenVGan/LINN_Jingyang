@@ -1,0 +1,405 @@
+---
+title: "LLIN_Analses"
+author: "Steven Gan"
+date: "`r Sys.Date()`"
+format: pdf
+toc: true
+---
+
+\pagebreak
+
+# Load the Data
+
+```{r}
+library(readr)
+ig2.df <- read_csv("Burkina Faso_bio_ig2_master_m36_anonym.csv")
+pn3.df <- read_csv("Burkina Faso_bio_pn3_master_m36_anonym.csv")
+interceptor.df <- read_csv("Burkina Faso_bio_interceptor_master_m36_anonym.csv")
+```
+
+# IG2 Data Preliminary Analyses
+
+## Strucutre of IG2 Data
+
+```{r}
+colnames(ig2.df)
+```
+
+```{r}
+table(ig2.df$NetType, ig2.df$Mosquitospeciesstrain)
+```
+
+```{r}
+# An.kisumu is the same as An.gambiae Kisumu in "Mosquitospeciesstrain". 
+# Merge them.
+ig2.df$Mosquitospeciesstrain[
+  ig2.df$Mosquitospeciesstrain == "An. gambiae Kisumu"] <- "An. Kisumu"
+ig2.df$Mosquitospeciesstrain[
+  ig2.df$Mosquitospeciesstrain == "An.kisumu"] <- "An. Kisumu"
+# Untreated and Untreated net are the same as in "NetType".
+ig2.df$NetType[ig2.df$NetType == "Untreated"] <- "Untreated Net"
+ig2.df$NetType[ig2.df$NetType == "Untreated net"] <- "Untreated Net"
+# One "NetType" is . and another is New. Remove it.
+ig2.df <- ig2.df[ig2.df$NetType != ".", ]
+ig2.df <- ig2.df[ig2.df$NetType != "New", ]
+
+# Filter > 100 vales in "mort24h" and "mort72"
+ig2.df <- ig2.df[ig2.df$mort24h <= 100, ]
+ig2.df <- ig2.df[ig2.df$mort72 <= 100, ]
+
+table(ig2.df$NetType, ig2.df$Mosquitospeciesstrain)
+```
+
+
+## Plot mortality at 24h and 72h v.s. round by type and mosquito species strain
+
+```{r, warning=FALSE, message=FALSE, fig.width=8, fig.height=4}
+
+# Plot "mort24h" & "mort72" v.s. "round" by "NetType" & "Mosquitospeciesstrain"
+
+library(ggplot2)
+library(gridExtra)
+
+m1 <- ggplot(ig2.df, aes(x = round, y = mort24h)) +
+  geom_point() + geom_smooth(method = "lm") +
+  facet_grid(NetType ~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Mortality at 24h") + xlab("Round") +
+  theme_bw()
+m2 <- ggplot(ig2.df, aes(x = round, y = mort72)) +
+  geom_point() + geom_smooth(method = "lm") +
+  facet_grid(NetType ~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Mortality at 72h") + xlab("Round") +
+  theme_bw()
+
+grid.arrange(m1, m2, ncol = 2, 
+             top = "Mortality vs Round of Ig2 Data")
+
+ggsave("1_IG2_Mortality_vs_Round.png", width = 8, height = 4)
+```
+
+## Plot mortality at 24h and 72h v.s. drug conc. by round and mosquito species strain
+
+```{r, warning=FALSE, message=FALSE, fig.width=8, fig.height=5}
+
+# Plot "mort24h" v.s. "alpha_g_kg" & "chlor_g_kg" by "round" & "Mosquitospeciesstrain".
+
+n1 <- ggplot(ig2.df, aes(x = alpha_g_kg, y = mort24h)) +
+  geom_point() + geom_smooth() +
+  facet_grid(round ~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Mortality at 24h") + xlab("Alpha concentration (g/kg)") +
+  theme_bw()
+n2 <- ggplot(ig2.df, aes(x = chlor_g_kg, y = mort24h)) +
+  geom_point() + geom_smooth() +
+  facet_grid(round ~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Mortality at 24h") + xlab("Chlor concentration (g/kg)") +
+  theme_bw()
+
+grid.arrange(n1, n2, ncol = 2, 
+             top = "Mortality vs Drug Concentration of IG2 Data")
+
+ggsave("2_IG2_Mortality_24h_vs_Drug_Concentration.png", width = 8, height = 5)
+```
+
+```{r, warning=FALSE, message=FALSE, fig.width=8, fig.height=3}
+
+# Plot "mort24h" v.s. "alpha_g_kg" & "chlor_g_kg" by "Mosquitospeciesstrain".
+
+n1.2 <- ggplot(ig2.df, aes(x = alpha_g_kg, y = mort24h)) +
+  geom_point() + geom_smooth() +
+  facet_wrap(~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Mortality at 24h") + xlab("Alpha concentration (g/kg)") +
+  theme_bw()
+n2.2 <- ggplot(ig2.df, aes(x = chlor_g_kg, y = mort24h)) +
+  geom_point() + geom_smooth() +
+  facet_wrap(~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Mortality at 24h") + xlab("Chlor concentration (g/kg)") +
+  theme_bw()
+
+grid.arrange(n1.2, n2.2, ncol = 2, 
+             top = "Mortality vs Drug Concentration of IG2 Data")
+
+ggsave("3_IG2_Mortality_vs_Drug_Concentration.png", width = 8, height = 3)
+```
+
+# PN3 Data Preliminary Analyses
+
+```{r}
+colnames(pn3.df)
+```
+
+```{r}
+table(pn3.df$NetType, pn3.df$Mosquitospeciesstrain)
+```
+
+```{r}
+# Change An. gambiae Kisumu to An. kisumu in "Mosquitospeciesstrain".
+pn3.df$Mosquitospeciesstrain[
+  pn3.df$Mosquitospeciesstrain == "An. gambiae Kisumu"] <- "An. Kisumu"
+# Contrôle is the same as Untreated Net_Control  in "NetType".
+# Merge them and name as "Untreated Net".
+pn3.df$NetType[pn3.df$NetType == "Contrôle"] <- "Untreated Net"
+pn3.df$NetType[pn3.df$NetType == "Untreated Net_Control"] <- "Untreated Net"
+
+# Filter > 100 vales in "mort" and "kd60"
+pn3.df <- pn3.df[pn3.df$mort <= 100, ]
+pn3.df <- pn3.df[pn3.df$kd60 <= 100, ]
+
+# Remove NA in "NetsType" and "Mosquitospeciesstrain"
+pn3.df <- pn3.df[!is.na(pn3.df$NetType), ]
+pn3.df <- pn3.df[!is.na(pn3.df$Mosquitospeciesstrain), ]
+
+table(pn3.df$NetType, pn3.df$Mosquitospeciesstrain)
+```
+
+## Plot knock out rate at 60 min and moratality v.s. round by type and mosquito species strain
+
+```{r, warning=FALSE, message=FALSE, fig.width=8, fig.height=4}
+# Plot "kd60" & "mort" v.s. "round" by "NetType" & "Mosquitospeciesstrain"
+
+o1 <- ggplot(pn3.df, aes(x = round, y = kd60)) +
+  geom_point() + geom_smooth(method = "lm") +
+  facet_grid(NetType ~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Knock Down Rate at 60 min") + xlab("Round") +
+  theme_bw()
+o2 <- ggplot(pn3.df, aes(x = round, y = mort)) +
+  geom_point() + geom_smooth(method = "lm") +
+  facet_grid(NetType ~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Mortality") + xlab("Round") +
+  theme_bw()
+
+grid.arrange(o1, o2, ncol = 2, 
+             top = "Knock Down Rate and Mortality vs Round of PN3 Data")
+
+ggsave("4_PN3_Knock_Down_Rate_and_Mortality_vs_Round.png", 
+       width = 8, height = 4)
+```
+
+
+## Plot knock out rate at 60 min and mortality v.s. drug conc. by round and mosquito species strain
+
+```{r, warning=FALSE, message=FALSE, fig.width=12, fig.height=5}
+# Plot "kd60" v.s. "delta_side_g_kg" & "delta_roof_g_kg" & "pbo_roof_g_kg" 
+# by "round" & "Mosquitospeciesstrain".
+
+p1 <- ggplot(pn3.df, aes(x = delta_side_g_kg, y = kd60)) +
+  geom_point() + geom_smooth() +
+  facet_grid(round ~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Knock Down Rate at 60 min") + xlab("Delta Side concentration (g/kg)") +
+  theme_bw()
+p2 <- ggplot(pn3.df, aes(x = delta_roof_g_kg, y = kd60)) +
+  geom_point() + geom_smooth() +
+  facet_grid(round ~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Knock Down Rate at 60 min") + xlab("Delta Roof concentration (g/kg)") +
+  theme_bw()
+p3 <- ggplot(pn3.df, aes(x = pbo_roof_g_kg, y = kd60)) +
+  geom_point() + geom_smooth() +
+  facet_grid(round ~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Knock Down Rate at 60 min") + xlab("PBO Roof concentration (g/kg)") +
+  theme_bw()
+
+grid.arrange(p1, p2, p3, ncol = 3, 
+             top = "Knock Down Rate vs Drug Concentration of PN3 Data")
+
+ggsave("5_PN3_Knock_Down_Rate_vs_Drug_Concentration.png", 
+       width = 12, height = 5)
+```
+
+```{r, warning=FALSE, message=FALSE, fig.width=12, fig.height=5}
+
+# Plot "mort" v.s. "delta_side_g_kg" & "delta_roof_g_kg" & "pbo_roof_g_kg"
+# by "round" & "Mosquitospeciesstrain".
+
+q1 <- ggplot(pn3.df, aes(x = delta_side_g_kg, y = mort)) +
+  geom_point() + geom_smooth() +
+  facet_grid(round ~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Mortality") + xlab("Delta Side concentration (g/kg)") +
+  theme_bw()
+q2 <- ggplot(pn3.df, aes(x = delta_roof_g_kg, y = mort)) +
+  geom_point() + geom_smooth() +
+  facet_grid(round ~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Mortality") + xlab("Delta Roof concentration (g/kg)") +
+  theme_bw()
+q3 <- ggplot(pn3.df, aes(x = pbo_roof_g_kg, y = mort)) +
+  geom_point() + geom_smooth() +
+  facet_grid(round ~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Mortality") + xlab("PBO Roof concentration (g/kg)") +
+  theme_bw()
+
+grid.arrange(q1, q2, q3, ncol = 3, 
+             top = "Mortality vs Drug Concentration of PN3 Data")
+
+ggsave("6_PN3_Mortality_vs_Drug_Concentration.png", width = 12, height = 5)
+```
+
+```{r, warning=FALSE, message=FALSE, fig.width=12, fig.height=3}
+
+# Plot "mort" v.s. "delta_side_g_kg" & "delta_roof_g_kg" & "pbo_roof_g_kg"
+# by "Mosquitospeciesstrain".
+
+q1.2 <- ggplot(pn3.df, aes(x = delta_side_g_kg, y = mort)) +
+  geom_point() + geom_smooth() +
+  facet_wrap(~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Mortality") + xlab("Delta Side concentration (g/kg)") +
+  theme_bw()
+q2.2 <- ggplot(pn3.df, aes(x = delta_roof_g_kg, y = mort)) +
+  geom_point() + geom_smooth() +
+  facet_wrap(~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Mortality") + xlab("Delta Roof concentration (g/kg)") +
+  theme_bw()
+q3.2 <- ggplot(pn3.df, aes(x = pbo_roof_g_kg, y = mort)) +
+  geom_point() + geom_smooth() +
+  facet_wrap(~ Mosquitospeciesstrain) +
+  ylim(0, 100) +
+  ylab("Mortality") + xlab("PBO Roof concentration (g/kg)") +
+  theme_bw()
+
+grid.arrange(q1.2, q2.2, q3.2, ncol = 3,
+             top = "Mortality vs Drug Concentration of PN3 Data")
+
+ggsave("7_PN3_Mortality_vs_Drug_Concentration.png", width = 12, height = 3)
+```
+
+# Comparison of IG2 and PN3 Data
+
+## Data structure
+
+```{r}
+library(dplyr)
+
+# Select An. coluzzii VKPER from "Mosquitospeciesstrain" in ig2.df.
+# Select Interceptor G2 from "NetType" in ig2.df.
+# Extract "NetType", "round", and "mort24h" from ig2.df
+# Name 3 columns as "NetType", "round", and "mort" respectively.
+ig2.mort <- ig2.df %>%
+  filter(Mosquitospeciesstrain == "An. coluzzii VKPER") %>%
+  filter(NetType == "Interceptor G2") %>%
+  select(NetType, round, mort24h) %>%
+  rename(mort = mort24h)
+
+# Select An. coluzzii VKPER from "Mosquitospeciesstrain" in pn3.df.
+# Select PermaNet 3.0 from "NetType" in pn3.df.
+# Extract "NetType", "round", and "mort" from pn3.df
+pn3.mort <- pn3.df %>%
+  filter(Mosquitospeciesstrain == "An. coluzzii VKPER") %>%
+  filter(NetType == "PermaNet 3.0") %>%
+  select(NetType, round, mort) 
+
+# Combine ig2.mort and pn3.mort
+ig2.pn3.mort <- rbind(ig2.mort, pn3.mort)
+```
+
+## Dot plot Mortality Comparison of IG2 and PN3 Data
+
+```{r, warning=FALSE, message=FALSE}
+# Plot "mort" v.s. "round" by "NetType" of ig2.pn3.mort.
+
+ggplot(ig2.pn3.mort, aes(x = round, y = mort, color = NetType,)) +
+  geom_point() + geom_smooth(method = "lm") +
+  facet_wrap(~ NetType) +
+  ylim(0, 100) +
+  ylab("Mortality") + xlab("Round") +
+  theme_bw() +
+  ggtitle("Mortality Comparison of IG2 and PN3 Data")
+
+ggsave("8_Mortality_Comparison_of_IG2_and_PN3_Data.png", width = 6, height = 3)
+```
+
+## Statistical inference
+
+```{r}
+# Perform t-test to compare mortality between IG2 and PN3 for each round.
+# t.test ~ 2 independent samples
+cat("t-test: IG2 vs PN3\n")
+cat("p-value for each round:\n")
+t.test(mort ~ NetType, ig2.pn3.mort[ig2.pn3.mort$round == 0, ])$p.value
+t.test(mort ~ NetType, ig2.pn3.mort[ig2.pn3.mort$round == 1, ])$p.value
+t.test(mort ~ NetType, ig2.pn3.mort[ig2.pn3.mort$round == 2, ])$p.value
+t.test(mort ~ NetType, ig2.pn3.mort[ig2.pn3.mort$round == 3, ])$p.value
+
+cat("\n")
+
+# Perform U-test to compare mortality between IG2 and PN3 for each round.
+# wilcox.test ~ 2 independent samples
+cat("U-test: IG2 vs PN3\n")
+cat("p-value for each round:\n")
+wilcox.test(mort ~ NetType, ig2.pn3.mort[ig2.pn3.mort$round == 0, ])$p.value
+wilcox.test(mort ~ NetType, ig2.pn3.mort[ig2.pn3.mort$round == 1, ])$p.value
+wilcox.test(mort ~ NetType, ig2.pn3.mort[ig2.pn3.mort$round == 2, ])$p.value
+wilcox.test(mort ~ NetType, ig2.pn3.mort[ig2.pn3.mort$round == 3, ])$p.value
+```
+
+## Violin plot Mortality Comparison of IG2 and PN3 Data
+
+```{r, warning=FALSE, message=FALSE}
+
+# Plot "mort" v.s. "round" of ig2.pn3.mort by "NetType".
+library(ggpubr)
+
+ggviolin(ig2.pn3.mort, x = "round", y = "mort", color = "NetType",
+         palette = "jco", add = "mean_sd", error.plot = "crossbar",
+         add.params = list(size = 0.5)) +
+  geom_jitter(aes(color = NetType), position = position_jitterdodge(0.2), 
+              size = 0.5) +
+  theme_bw() + ylim(0, 100) +
+  labs(x = "Round", y = "Mortality",
+       title = "Mortality Comparison of IG2 and PN3 Data",
+       subtitle = "An. coluzzii VKPER") +
+  # U test of 2 independent samples for each round
+  stat_compare_means(method = "wilcox.test", label = "p.signif",
+                     aes(group = NetType), label.y = 99)
+
+ggsave("9_Mortality_Comparison_of_IG2_and_PN3_Data_Violin.png", 
+       width = 6, height = 4)
+```
+
+## Box plot Mortality Comparison of IG2 and PN3 Data
+
+```{r, warning=FALSE, message=FALSE}
+# Plot "mort" v.s. "round" of ig2.pn3.mort by "NetType".
+
+ggboxplot(ig2.pn3.mort, x = "round", y = "mort", color = "NetType",
+          palette = "jco") +
+  geom_jitter(aes(color = NetType), position = position_jitterdodge(0.2),
+              size = 1) +
+  theme_bw() + ylim(0, 100) +
+  labs(x = "Round", y = "Mortality",
+       title = "Mortality Comparison of IG2 and PN3 Data",
+       subtitle = "An. coluzzii VKPER") +
+  # U test of 2 independent samples for each round
+  stat_compare_means(method = "wilcox.test", label = "p.signif",
+                     aes(group = NetType), label.y = 99)
+
+ggsave("10_Mortality_Comparison_of_IG2_and_PN3_Data_Box.png", 
+       width = 5, height = 3)
+```
+
+
+
+# Interceptor Data Preliminary Analyses
+
+## Structure of Interceptor Data
+
+```{r}
+colnames(interceptor.df)
+```
+
+```{r}
+table(interceptor.df$Mosquitospeciesstrain)
+```
+
